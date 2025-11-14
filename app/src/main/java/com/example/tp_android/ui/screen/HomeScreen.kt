@@ -35,6 +35,13 @@ fun HomeScreen(
     val favoritesWeather by viewModel.favoritesWeather.collectAsState()
     val isLoadingFavorites by viewModel.isLoadingFavorites.collectAsState()
 
+    // Observer la navigation depuis la géolocalisation
+    LaunchedEffect(Unit) {
+        viewModel.navigateToLocation.collect { (cityName, latitude, longitude) ->
+            onCityClick(cityName, latitude, longitude)
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(

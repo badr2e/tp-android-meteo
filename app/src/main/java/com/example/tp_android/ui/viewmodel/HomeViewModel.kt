@@ -158,6 +158,20 @@ class HomeViewModel(
     suspend fun isFavorite(latitude: Double, longitude: Double): Boolean {
         return favoritesRepository.isFavorite(latitude, longitude)
     }
+
+    // État pour la navigation vers l'écran de détails depuis la géolocalisation
+    private val _navigateToLocation = MutableSharedFlow<Triple<String, Double, Double>>()
+    val navigateToLocation: SharedFlow<Triple<String, Double, Double>> = _navigateToLocation.asSharedFlow()
+
+    /**
+     * Charge les données météo pour la position actuelle (géolocalisation)
+     * Navigue automatiquement vers l'écran de détails
+     */
+    fun loadWeatherForCurrentLocation(cityName: String, latitude: Double, longitude: Double) {
+        viewModelScope.launch {
+            _navigateToLocation.emit(Triple(cityName, latitude, longitude))
+        }
+    }
 }
 
 /**

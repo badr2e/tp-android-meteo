@@ -2,8 +2,10 @@ package com.example.tp_android
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.location.Geocoder
 import android.os.Bundle
 import android.widget.Toast
+import java.util.Locale
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,9 +27,6 @@ import com.example.tp_android.ui.viewmodel.HomeViewModel
 import com.example.tp_android.ui.viewmodel.HomeViewModelFactory
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -128,8 +127,32 @@ class MainActivity : ComponentActivity() {
             ) {
                 fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                     if (location != null) {
-                        CoroutineScope(Dispatchers.Main).launch {
-                            homeViewModel.searchCities("${location.latitude},${location.longitude}")
+                        // Utiliser Geocoder pour obtenir le nom de la ville
+                        try {
+                            val geocoder = Geocoder(this, Locale.getDefault())
+                            val addresses = geocoder.getFromLocation(location.latitude, location.longitude, 1)
+
+                            val cityName = if (!addresses.isNullOrEmpty()) {
+                                val address = addresses[0]
+                                // Essayer d'obtenir la ville, sinon la localité, sinon "Ma position"
+                                address.locality ?: address.subAdminArea ?: address.adminArea ?: "Ma position"
+                            } else {
+                                "Ma position"
+                            }
+
+                            // Charger les données météo pour la position actuelle
+                            homeViewModel.loadWeatherForCurrentLocation(
+                                cityName,
+                                location.latitude,
+                                location.longitude
+                            )
+                        } catch (e: Exception) {
+                            // En cas d'erreur de géocodage, utiliser "Ma position"
+                            homeViewModel.loadWeatherForCurrentLocation(
+                                "Ma position",
+                                location.latitude,
+                                location.longitude
+                            )
                         }
                     } else {
                         Toast.makeText(
